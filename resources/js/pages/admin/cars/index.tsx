@@ -141,7 +141,6 @@ export default function AdminCarsIndex({ cars }: { cars: Car[] }) {
                 </Card>
             </div>
 
-            {/* Delete confirmation dialog */}
             <Dialog open={!!deletingCar} onOpenChange={(open) => !open && setDeletingCar(null)}>
                 <DialogContent>
                     <DialogHeader>

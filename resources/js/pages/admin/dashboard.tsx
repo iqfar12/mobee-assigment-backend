@@ -39,21 +39,18 @@ export default function AdminDashboard({
                     <p className="text-muted-foreground">Overview of users, cars, and activity.</p>
                 </div>
 
-                {/* Stat cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <StatCard icon={Users} label="Total Users" value={stats.total_users} />
                     <StatCard icon={Car} label="Cars in Inventory" value={stats.total_cars} />
                     <StatCard icon={Heart} label="Total Likes" value={stats.total_likes} />
                 </div>
 
-                {/* Top preferences */}
                 <div className="grid gap-4 sm:grid-cols-3">
                     <PreferenceCard label="Most Liked Brand" value={stats.top_brand} />
                     <PreferenceCard label="Most Liked Model" value={stats.top_model} />
                     <PreferenceCard label="Most Liked Type" value={stats.top_type} />
                 </div>
 
-                {/* Recent users */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Recent Registrations</CardTitle>

@@ -35,7 +35,6 @@ export default function AdminUserShow({
                     </Button>
                 </div>
 
-                {/* User info */}
                 <Card>
                     <CardHeader>
                         <CardTitle>User Details</CardTitle>
@@ -66,7 +65,6 @@ export default function AdminUserShow({
                     </CardContent>
                 </Card>
 
-                {/* Liked cars */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Liked Cars ({liked_cars.length})</CardTitle>
