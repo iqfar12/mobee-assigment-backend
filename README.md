@@ -123,10 +123,12 @@ Response: array of car objects.
         "brand": "Toyota",
         "model": "Camry",
         "type": "Sedan",
-        "image_url": "/storage/cars/abc.jpg"
+        "image_url": "http://localhost:8000/storage/cars/toyota-camry.jpeg"
     }
 ]
 ```
+
+`image_url` is always an absolute URL prefixed with `APP_URL`.
 
 #### Get Single Car
 ```
@@ -135,31 +137,57 @@ GET /api/cars/{id}
 
 ---
 
-### User Preferences (Likes)
+### User Reactions (Like / Dislike)
 
-#### Get Liked Cars
+#### Get Preferences
 ```
 GET /api/user/preferences
 ```
 
-Returns the list of cars the authenticated user has liked.
+Returns the authenticated user's liked and disliked cars.
 
-#### Like a Car
-```
-POST /api/cars/{id}/like
+```json
+{
+    "liked_cars": [ { "id": 1, "brand": "Toyota", "model": "Camry", ... } ],
+    "disliked_cars": [ { "id": 3, "brand": "BMW", "model": "X5", ... } ]
+}
 ```
 
-Idempotent — liking an already-liked car has no effect.
+#### React to a Car
+```
+POST /api/cars/{id}/react
+```
+
+Body:
+```json
+{ "type": 1 }
+```
+
+| `type` | Meaning  |
+|--------|----------|
+| `1`    | Like     |
+| `0`    | Dislike  |
+
+If the user already reacted, the existing reaction is updated. Liking removes any dislike and vice versa.
 
 Response `201`:
 ```json
 { "message": "Car liked." }
 ```
 
-#### Unlike a Car
+#### Remove a Reaction
 ```
-DELETE /api/cars/{id}/like
+DELETE /api/cars/{id}/react
 ```
+
+Response `204 No Content`.
+
+#### Reset All Reactions
+```
+DELETE /api/user/reactions
+```
+
+Removes every like and dislike the authenticated user has submitted.
 
 Response `204 No Content`.
 
