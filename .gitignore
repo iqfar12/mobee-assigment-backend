@@ -26,5 +26,5 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-AGENT.md
-CLAUDE.md
+.AGENT.md
+.CLAUDE.md
