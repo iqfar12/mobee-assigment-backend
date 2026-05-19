@@ -4,13 +4,14 @@ namespace Database\Seeders;
 
 use App\Models\Car;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class CarSeeder extends Seeder
 {
     public function run(): void
     {
         $cars = [
-            ['brand' => 'Toyota', 'model' => 'Camry', 'type' => 'Sedan', 'image_url' => 'https://placehold.co/400x300?text=Toyota+Camry'],
+            ['brand' => 'Toyota', 'model' => 'Camry', 'type' => 'Sedan', 'image_url' => '/storage/cars/toyota-camry.jpeg'],
             ['brand' => 'Toyota', 'model' => 'Corolla', 'type' => 'Sedan', 'image_url' => 'https://placehold.co/400x300?text=Toyota+Corolla'],
             ['brand' => 'Toyota', 'model' => 'RAV4', 'type' => 'SUV', 'image_url' => 'https://placehold.co/400x300?text=Toyota+RAV4'],
             ['brand' => 'Toyota', 'model' => 'Hilux', 'type' => 'Truck', 'image_url' => 'https://placehold.co/400x300?text=Toyota+Hilux'],
@@ -46,7 +47,14 @@ class CarSeeder extends Seeder
         ];
 
         foreach ($cars as $car) {
+            $car['image_url'] = $this->generateImageUrl($car['brand'], $car['model']);
             Car::create($car);
         }
+    }
+
+    private function generateImageUrl(String $brand, String $model)
+    {
+        $filename = Str::lower($brand).'-'.Str::lower(Str::replace(' ', '', $model)).'.jpeg';
+        return '/storage/cars/'.$filename;
     }
 }
