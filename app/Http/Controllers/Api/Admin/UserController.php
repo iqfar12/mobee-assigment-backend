@@ -17,7 +17,7 @@ class UserController extends Controller
 
     public function show(User $user): JsonResponse
     {
-        $likedCars = $user->carLikes()->with('car')->get()->pluck('car');
+        $likedCars = $user->carLikes()->where('type', 1)->with('car')->get()->pluck('car');
 
         return response()->json([
             'user' => $user,

@@ -4,7 +4,6 @@
 /public/build
 /public/fonts-manifest.dev.json
 /public/hot
-/public/storage
 /storage/*.key
 /storage/pail
 /resources/js/actions
@@ -27,3 +26,5 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+AGENT.md
+CLAUDE.md

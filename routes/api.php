@@ -18,8 +18,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cars/{car}', [CarController::class, 'show']);
 
     Route::get('/user/preferences', [CarLikeController::class, 'index']);
-    Route::post('/cars/{car}/like', [CarLikeController::class, 'store']);
-    Route::delete('/cars/{car}/like', [CarLikeController::class, 'destroy']);
+    Route::post('/cars/{car}/react', [CarLikeController::class, 'store']);
+    Route::delete('/cars/{car}/react', [CarLikeController::class, 'destroy']);
+    Route::delete('/user/reactions', [CarLikeController::class, 'resetLike']);
 
     Route::middleware(EnsureIsAdmin::class)->prefix('admin')->group(function () {
         Route::get('/users', [AdminUserController::class, 'index']);

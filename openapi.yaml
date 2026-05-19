@@ -1,0 +1,526 @@
+openapi: 3.0.3
+
+info:
+  title: Mobee API
+  description: REST API for the Mobee car inventory and user preferences platform.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api
+    description: Local development
+  - url: https://your-vercel-deployment.vercel.app/api
+    description: Production
+
+security: []
+
+tags:
+  - name: Auth
+    description: Authentication and current user
+  - name: Cars
+    description: Car inventory
+  - name: Reactions
+    description: Like (type=1) or dislike (type=0) a car
+  - name: Admin – Users
+    description: Admin user management (admin token required)
+  - name: Admin – Reports
+    description: Admin preference reports (admin token required)
+
+paths:
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+
+  /login:
+    post:
+      tags: [Auth]
+      summary: Log in and obtain an API token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password
+      responses:
+        "200":
+          description: Authenticated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "1|abc123xyz"
+                  user:
+                    $ref: "#/components/schemas/User"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /logout:
+    post:
+      tags: [Auth]
+      summary: Invalidate the current token
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logged out.
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /user:
+    get:
+      tags: [Auth]
+      summary: Get the authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Authenticated user object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  # ── Cars ──────────────────────────────────────────────────────────────────
+
+  /cars:
+    get:
+      tags: [Cars]
+      summary: List all cars
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Array of cars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Car"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /cars/{car}:
+    get:
+      tags: [Cars]
+      summary: Get a single car
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CarId"
+      responses:
+        "200":
+          description: Car object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Reactions ─────────────────────────────────────────────────────────────
+
+  /user/preferences:
+    get:
+      tags: [Reactions]
+      summary: Get the authenticated user's liked and disliked cars
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Liked and disliked car lists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  liked_cars:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Car"
+                  disliked_cars:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Car"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /cars/{car}/react:
+    post:
+      tags: [Reactions]
+      summary: Like or dislike a car
+      description: |
+        Submits a reaction for the authenticated user.
+        - `type: 1` — like the car (removes any existing dislike)
+        - `type: 0` — dislike the car (removes any existing like)
+
+        If the user has already reacted, the existing reaction is updated.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CarId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type]
+              properties:
+                type:
+                  type: integer
+                  enum: [0, 1]
+                  description: "1 = like, 0 = dislike"
+                  example: 1
+      responses:
+        "201":
+          description: Reaction saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Car liked.
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+    delete:
+      tags: [Reactions]
+      summary: Remove the reaction from a car
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CarId"
+      responses:
+        "204":
+          description: Reaction removed
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /user/reactions:
+    delete:
+      tags: [Reactions]
+      summary: Reset all reactions for the authenticated user
+      description: Deletes every like and dislike the authenticated user has ever submitted.
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: All reactions cleared
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  # ── Admin – Users ─────────────────────────────────────────────────────────
+
+  /admin/users:
+    get:
+      tags: [Admin – Users]
+      summary: List all users with reaction counts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Array of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserWithLikeCount"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /admin/users/{user}:
+    get:
+      tags: [Admin – Users]
+      summary: Get a user with their liked cars
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: User detail with liked cars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  liked_cars:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Car"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Admin – Reports ───────────────────────────────────────────────────────
+
+  /admin/reports:
+    get:
+      tags: [Admin – Reports]
+      summary: Preference report for all non-admin users
+      description: Reports are based on liked cars only (type=1).
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Array of per-user preference reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserReport"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /admin/reports/{user}:
+    get:
+      tags: [Admin – Reports]
+      summary: Preference report for a single user
+      description: Reports are based on liked cars only (type=1).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: Single user preference report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserReport"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+# ── Components ────────────────────────────────────────────────────────────────
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Sanctum personal access token obtained from POST /login
+
+  parameters:
+    CarId:
+      name: car
+      in: path
+      required: true
+      description: Car ID
+      schema:
+        type: integer
+        example: 1
+
+    UserId:
+      name: user
+      in: path
+      required: true
+      description: User ID
+      schema:
+        type: integer
+        example: 2
+
+  schemas:
+    Car:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        brand:
+          type: string
+          example: Toyota
+        model:
+          type: string
+          example: Camry
+        type:
+          type: string
+          enum: [Sedan, SUV, Hatchback, Truck, Coupe, Convertible, Crossover, Minivan]
+          example: Sedan
+        image_url:
+          type: string
+          description: Absolute URL prefixed with APP_URL for local uploads
+          example: http://localhost:8000/storage/cars/abc123.jpg
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Admin User
+        email:
+          type: string
+          format: email
+          example: admin@example.com
+        is_admin:
+          type: boolean
+          example: true
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserWithLikeCount:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            car_likes_count:
+              type: integer
+              description: Total number of reactions (likes + dislikes)
+              example: 5
+
+    Preferences:
+      type: object
+      properties:
+        most_liked_brand:
+          type: string
+          nullable: true
+          example: Toyota
+        most_liked_model:
+          type: string
+          nullable: true
+          example: Camry
+        most_liked_type:
+          type: string
+          nullable: true
+          example: Sedan
+
+    UserReport:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 2
+            name:
+              type: string
+              example: Jane Doe
+            email:
+              type: string
+              format: email
+              example: jane@example.com
+        preferences:
+          $ref: "#/components/schemas/Preferences"
+
+    ValidationErrorDetail:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      example:
+        type: ["The type field must be true or false."]
+
+  responses:
+    Unauthenticated:
+      description: Missing or invalid token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthenticated.
+
+    Forbidden:
+      description: Authenticated but not an admin
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Forbidden.
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "No query results for model [Car] 1"
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: The type field is required.
+              errors:
+                $ref: "#/components/schemas/ValidationErrorDetail"

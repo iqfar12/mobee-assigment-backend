@@ -12,13 +12,13 @@ class ReportController extends Controller
 {
     public function index(): Response
     {
-        $users = User::where('is_admin', false)
+        $users = User::query()->where('is_admin', false)
             ->withCount('carLikes')
             ->latest()
             ->get();
 
         $report = $users->map(function (User $user) {
-            $likes = CarLike::where('user_id', $user->id)->with('car')->get();
+            $likes = CarLike::query()->where('user_id', $user->id)->where('car_likes.type', 1)->with('car')->get();
             $cars = $likes->pluck('car');
 
             return [

@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     public function index(): Response
     {
-        $users = User::where('is_admin', false)
+        $users = User::query()->where('is_admin', false)
             ->withCount('carLikes')
             ->latest()
             ->get();
@@ -24,6 +24,7 @@ class UserController extends Controller
     public function show(User $user): Response
     {
         $likedCars = $user->carLikes()
+            ->where('type', 1)
             ->with('car')
             ->latest()
             ->get()

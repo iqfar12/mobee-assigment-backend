@@ -11,7 +11,7 @@ class ReportController extends Controller
 {
     public function index(): JsonResponse
     {
-        $users = User::where('is_admin', false)->get();
+        $users = User::query()->where('is_admin', false)->get();
 
         $report = $users->map(fn (User $user) => [
             'user' => $user->only('id', 'name', 'email'),
@@ -31,7 +31,7 @@ class ReportController extends Controller
 
     private function buildPreferences(int $userId): array
     {
-        $likes = CarLike::where('user_id', $userId)->with('car')->get();
+        $likes = CarLike::query()->where('user_id', $userId)->where('car_likes.type', 1)->with('car')->get();
 
         if ($likes->isEmpty()) {
             return [

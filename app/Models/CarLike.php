@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'car_id'])]
+#[Fillable(['user_id', 'car_id', 'type'])]
 class CarLike extends Model
 {
     public function user(): BelongsTo
